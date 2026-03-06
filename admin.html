@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PINK! Liberec — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pink:#FF2D78; --pink-dark:#CC0050;
+    --black:#0A0A0A; --dark:#111114; --dark2:#1A1A1F;
+    --grey:#2A2A30; --light-grey:#8A8A9A; --white:#F5F0F2;
+    --green:#22C55E; --yellow:#F59E0B; --red:#EF4444;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--black);color:var(--white);font-family:'Barlow',sans-serif;font-size:15px}
+
+  /* LOGIN */
+  #login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+  #login-screen::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 40%,rgba(255,45,120,0.15) 0%,transparent 65%)}
+  .login-card{background:var(--dark2);border:1px solid rgba(255,45,120,0.2);border-radius:6px;padding:3rem 2.5rem;width:100%;max-width:380px;position:relative;z-index:1}
+  .login-logo{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:.1em;text-align:center;margin-bottom:.3rem}
+  .login-logo span{color:var(--pink)}
+  .login-sub{text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:.78rem;letter-spacing:.25em;text-transform:uppercase;color:var(--light-grey);margin-bottom:2.5rem}
+  .fg{margin-bottom:1.2rem}
+  .fg label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;color:var(--light-grey);margin-bottom:.4rem}
+  .fg input{width:100%;background:var(--grey);border:1px solid rgba(255,255,255,.08);border-radius:3px;color:var(--white);font-family:'Barlow',sans-serif;font-size:1rem;padding:.75rem 1rem;outline:none;transition:border-color .2s}
+  .fg input:focus{border-color:var(--pink)}
+  .login-btn{width:100%;background:var(--pink);color:var(--white);border:none;border-radius:3px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.1em;text-transform:uppercase;padding:.9rem;transition:background .2s}
+  .login-btn:hover{background:var(--pink-dark)}
+  .login-err{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);border-radius:3px;color:#FCA5A5;font-size:.88rem;padding:.7rem 1rem;margin-top:1rem;display:none}
+  .login-err.show{display:block}
+  .login-hint{text-align:center;color:var(--light-grey);font-size:.8rem;margin-top:1.2rem}
+  .login-hint strong{color:var(--white)}
+
+  /* ADMIN LAYOUT */
+  #admin{display:none;min-height:100vh;flex-direction:column}
+  #admin.show{display:flex}
+  .topbar{background:var(--dark);border-bottom:1px solid rgba(255,45,120,.15);display:flex;align-items:center;justify-content:space-between;padding:0 2rem;height:58px;flex-shrink:0;position:sticky;top:0;z-index:50}
+  .topbar-logo{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:.1em}
+  .topbar-logo span{color:var(--pink)}
+  .tb-badge{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;background:rgba(255,45,120,.15);color:var(--pink);padding:.2rem .6rem;border-radius:2px;margin-left:.8rem}
+  .tb-right{display:flex;align-items:center;gap:.8rem}
+  .tb-btn{background:transparent;border:1px solid rgba(255,255,255,.15);color:var(--light-grey);border-radius:2px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;padding:.35rem .9rem;transition:border-color .2s,color .2s;text-decoration:none;display:inline-block}
+  .tb-btn:hover{border-color:var(--pink);color:var(--pink)}
+  .admin-body{display:flex;flex:1}
+
+  /* SIDEBAR */
+  .sidebar{width:215px;flex-shrink:0;background:var(--dark);border-right:1px solid rgba(255,255,255,.05);padding:1.2rem 0;overflow-y:auto}
+  .sb-sec{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;letter-spacing:.25em;text-transform:uppercase;color:var(--light-grey);padding:0 1.2rem;margin:1.4rem 0 .4rem}
+  .sb-sec:first-child{margin-top:0}
+  .sb-item{display:flex;align-items:center;gap:.7rem;padding:.6rem 1.2rem;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:.92rem;font-weight:600;color:var(--light-grey);border-left:3px solid transparent;transition:color .15s,background .15s,border-color .15s}
+  .sb-item:hover{color:var(--white);background:rgba(255,255,255,.04)}
+  .sb-item.active{color:var(--white);background:rgba(255,45,120,.1);border-left-color:var(--pink)}
+  .sb-ico{width:20px;text-align:center;font-size:.95rem}
+  .sb-cnt{margin-left:auto;background:var(--grey);color:var(--light-grey);font-size:.7rem;padding:.1rem .5rem;border-radius:10px}
+  .sb-item.active .sb-cnt{background:rgba(255,45,120,.3);color:var(--pink)}
+
+  /* MAIN */
+  .admin-main{flex:1;overflow-y:auto}
+  .panel{display:none;padding:2.5rem}
+  .panel.active{display:block}
+  .p-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2rem;flex-wrap:wrap;gap:1rem}
+  .p-title{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:.05em;line-height:1}
+  .p-sub{color:var(--light-grey);font-size:.9rem;margin-top:.3rem}
+
+  /* BUTTONS */
+  .btn{display:inline-flex;align-items:center;gap:.5rem;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;letter-spacing:.08em;text-transform:uppercase;padding:.6rem 1.4rem;border-radius:3px;cursor:pointer;border:none;transition:background .15s,transform .1s}
+  .btn:active{transform:scale(.98)}
+  .btn-pink{background:var(--pink);color:var(--white)}
+  .btn-pink:hover{background:var(--pink-dark)}
+  .btn-outline{background:transparent;border:1px solid rgba(255,255,255,.2);color:var(--white)}
+  .btn-outline:hover{border-color:var(--pink)}
+  .btn-danger{background:rgba(239,68,68,.15);color:#FCA5A5;border:1px solid rgba(239,68,68,.2)}
+  .btn-danger:hover{background:rgba(239,68,68,.3)}
+  .btn-sm{padding:.38rem .85rem;font-size:.78rem}
+
+  /* STATS */
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem}
+  .stat-card{background:var(--dark2);border:1px solid rgba(255,255,255,.06);border-radius:4px;padding:1.2rem 1.4rem}
+  .sc-lbl{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--light-grey);margin-bottom:.4rem}
+  .sc-val{font-family:'Bebas Neue',sans-serif;font-size:2.5rem;line-height:1}
+  .sc-sub{font-size:.82rem;color:var(--light-grey);margin-top:.2rem}
+  .sc-pink .sc-val{color:var(--pink)} .sc-green .sc-val{color:var(--green)} .sc-yellow .sc-val{color:var(--yellow)}
+
+  /* TABLE */
+  .tbl-wrap{background:var(--dark2);border:1px solid rgba(255,255,255,.06);border-radius:4px;overflow:hidden}
+  table{width:100%;border-collapse:collapse}
+  th{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--light-grey);text-align:left;padding:.65rem 1rem;border-bottom:1px solid rgba(255,255,255,.08)}
+  td{padding:.85rem 1rem;border-bottom:1px solid rgba(255,255,255,.04);font-size:.92rem;vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:rgba(255,255,255,.02)}
+  .td-t{font-weight:600;color:var(--white)}
+  .td-d{color:var(--pink);font-family:'Barlow Condensed',sans-serif;font-weight:600;white-space:nowrap}
+  .td-m{color:var(--light-grey);font-size:.85rem;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .td-a{display:flex;gap:.4rem}
+
+  /* BADGES */
+  .badge{display:inline-block;font-family:'Barlow Condensed',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.2rem .6rem;border-radius:2px}
+  .b-turnaj{background:rgba(255,45,120,.15);color:var(--pink)}
+  .b-kemp{background:rgba(59,130,246,.15);color:#93C5FD}
+  .b-mcr{background:rgba(245,158,11,.15);color:#FCD34D}
+  .b-vysledky{background:rgba(34,197,94,.15);color:#86EFAC}
+  .b-upcoming{background:rgba(255,107,168,.2);color:#FF6BA8}
+  .b-info{background:rgba(139,92,246,.15);color:#C4B5FD}
+
+  /* TOOLBAR */
+  .toolbar{display:flex;gap:.8rem;margin-bottom:1.2rem;flex-wrap:wrap;align-items:center}
+  .sw{position:relative;flex:1;min-width:180px}
+  .sw input{width:100%;background:var(--dark2);border:1px solid rgba(255,255,255,.08);border-radius:3px;color:var(--white);font-family:'Barlow',sans-serif;font-size:.9rem;padding:.6rem 1rem .6rem 2.3rem;outline:none;transition:border-color .2s}
+  .sw input:focus{border-color:var(--pink)}
+  .sw::before{content:'🔍';position:absolute;left:.75rem;top:50%;transform:translateY(-50%);font-size:.82rem;pointer-events:none}
+  .flt{background:var(--dark2);border:1px solid rgba(255,255,255,.08);border-radius:3px;color:var(--white);font-family:'Barlow Condensed',sans-serif;font-size:.85rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:.6rem 1rem;outline:none;cursor:pointer}
+
+  /* FIELDS */
+  .field{margin-bottom:1.1rem}
+  .field label{display:block;font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:var(--light-grey);margin-bottom:.4rem}
+  .field input,.field textarea,.field select{width:100%;background:var(--grey);border:1px solid rgba(255,255,255,.08);border-radius:3px;color:var(--white);font-family:'Barlow',sans-serif;font-size:.95rem;padding:.7rem 1rem;outline:none;transition:border-color .2s}
+  .field input:focus,.field textarea:focus,.field select:focus{border-color:var(--pink)}
+  .field textarea{min-height:80px;resize:vertical}
+  .field select option{background:var(--grey)}
+  .fr2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  .fr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
+
+  /* EDIT CARDS */
+  .ecard{background:var(--dark2);border:1px solid rgba(255,255,255,.06);border-radius:4px;padding:1.8rem 2rem;margin-bottom:1.5rem}
+  .ecard-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.95rem;letter-spacing:.12em;text-transform:uppercase;color:var(--white);margin-bottom:1.4rem;display:flex;align-items:center;gap:.6rem}
+
+  /* MODAL */
+  .mov{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center;padding:1.5rem}
+  .mov.show{display:flex}
+  .modal{background:var(--dark2);border:1px solid rgba(255,45,120,.2);border-radius:6px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto}
+  .mhdr{display:flex;align-items:center;justify-content:space-between;padding:1.4rem 1.8rem;border-bottom:1px solid rgba(255,255,255,.07)}
+  .mttl{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:.05em}
+  .mx{background:none;border:none;color:var(--light-grey);font-size:1.5rem;cursor:pointer;line-height:1;transition:color .15s}
+  .mx:hover{color:var(--white)}
+  .mbody{padding:1.8rem}
+  .mfoot{padding:1.2rem 1.8rem;border-top:1px solid rgba(255,255,255,.07);display:flex;gap:.7rem;justify-content:flex-end}
+
+  /* TOAST */
+  .tw{position:fixed;bottom:2rem;right:2rem;z-index:300;display:flex;flex-direction:column;gap:.6rem}
+  .toast{background:var(--dark2);border:1px solid rgba(255,255,255,.1);border-radius:4px;padding:.85rem 1.1rem;display:flex;align-items:center;gap:.7rem;font-size:.9rem;min-width:240px;animation:sIn .3s ease;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+  .toast.success{border-left:3px solid var(--green)}
+  .toast.error{border-left:3px solid var(--red)}
+  .toast.info{border-left:3px solid var(--pink)}
+  @keyframes sIn{from{transform:translateX(40px);opacity:0}to{transform:none;opacity:1}}
+
+  /* ACTIVITY */
+  .ai{display:flex;gap:1rem;align-items:flex-start;padding:.8rem 0;border-bottom:1px solid rgba(255,255,255,.05)}
+  .ai:last-child{border-bottom:none}
+  .adot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+  .adot.add{background:var(--green)} .adot.edit{background:var(--yellow)} .adot.delete{background:var(--red)}
+  .atxt{font-size:.86rem;color:var(--light-grey);line-height:1.5;flex:1}
+  .atxt strong{color:var(--white)}
+  .atime{font-size:.74rem;color:var(--light-grey);flex-shrink:0}
+
+  /* DASH */
+  .dg{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:1.5rem}
+  .dbox-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.8rem;letter-spacing:.18em;text-transform:uppercase;color:var(--light-grey);margin-bottom:.8rem}
+
+  /* EMPTY */
+  .empty{text-align:center;padding:3.5rem 2rem;color:var(--light-grey)}
+  .empty .ico{font-size:2.5rem;margin-bottom:.8rem}
+
+  @media(max-width:800px){
+    .sidebar{display:none}
+    .stats-grid{grid-template-columns:1fr 1fr}
+    .panel{padding:1.5rem}
+    .dg,.fr2,.fr3{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">PINK<span>!</span> Liberec</div>
+    <div class="login-sub">Administrace webu</div>
+    <div class="fg">
+      <label>Heslo</label>
+      <input type="password" id="lpwd" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Přihlásit se →</button>
+    <div class="login-err" id="lerr">Nesprávné heslo.</div>
+    <div class="login-hint">Výchozí heslo: <strong>pink2025</strong></div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="admin">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:.5rem">
+      <div class="topbar-logo">PINK<span>!</span> Liberec</div>
+      <span class="tb-badge">Admin</span>
+    </div>
+    <div class="tb-right">
+      <a href="pink-liberec.html" target="_blank" class="tb-btn">Zobrazit web ↗</a>
+      <button class="tb-btn" onclick="doLogout()">Odhlásit</button>
+    </div>
+  </div>
+
+  <div class="admin-body">
+    <nav class="sidebar">
+      <div class="sb-sec">Přehled</div>
+      <div class="sb-item active" onclick="sp('dashboard',this)"><span class="sb-ico">📊</span>Dashboard</div>
+      <div class="sb-sec">Obsah webu</div>
+      <div class="sb-item" onclick="sp('hero',this)"><span class="sb-ico">🏠</span>Hero sekce</div>
+      <div class="sb-item" onclick="sp('akce',this)"><span class="sb-ico">🗓</span>Akce<span class="sb-cnt" id="cnt-akce">0</span></div>
+      <div class="sb-item" onclick="sp('novinky',this)"><span class="sb-ico">📰</span>Novinky<span class="sb-cnt" id="cnt-nov">0</span></div>
+      <div class="sb-item" onclick="sp('oKlubu',this)"><span class="sb-ico">🏓</span>O klubu</div>
+      <div class="sb-item" onclick="sp('mladez',this)"><span class="sb-ico">🎓</span>Mládež</div>
+      <div class="sb-item" onclick="sp('verejnost',this)"><span class="sb-ico">🕐</span>Veřejnost</div>
+      <div class="sb-item" onclick="sp('kontakt',this)"><span class="sb-ico">📞</span>Kontakt</div>
+      <div class="sb-sec">Systém</div>
+      <div class="sb-item" onclick="sp('log',this)"><span class="sb-ico">📋</span>Aktivita</div>
+      <div class="sb-item" onclick="sp('settings',this)"><span class="sb-ico">⚙️</span>Nastavení</div>
+    </nav>
+
+    <main class="admin-main">
+
+      <!-- DASHBOARD -->
+      <div class="panel active" id="panel-dashboard">
+        <div class="p-hdr"><div><div class="p-title">Dashboard</div><div class="p-sub">Přehled obsahu webu</div></div></div>
+        <div class="stats-grid">
+          <div class="stat-card sc-pink"><div class="sc-lbl">Akcí celkem</div><div class="sc-val" id="d-akce">0</div><div class="sc-sub">v kalendáři</div></div>
+          <div class="stat-card sc-green"><div class="sc-lbl">Nadcházející</div><div class="sc-val" id="d-upc">0</div><div class="sc-sub">akcí</div></div>
+          <div class="stat-card sc-yellow"><div class="sc-lbl">Novinky</div><div class="sc-val" id="d-nov">0</div><div class="sc-sub">článků</div></div>
+          <div class="stat-card"><div class="sc-lbl">Poslední změna</div><div class="sc-val" style="font-size:1.3rem;padding-top:.3rem" id="d-last">—</div><div class="sc-sub">datum</div></div>
+        </div>
+        <div class="dg">
+          <div><div class="dbox-title">Nejbližší akce</div><div id="d-upc-list"></div></div>
+          <div><div class="dbox-title">Poslední aktivita</div><div id="d-act"></div></div>
+        </div>
+      </div>
+
+      <!-- HERO -->
+      <div class="panel" id="panel-hero">
+        <div class="p-hdr"><div><div class="p-title">Hero sekce</div><div class="p-sub">Hlavní banner a statistiky</div></div><button class="btn btn-pink" onclick="saveHero()">💾 Uložit</button></div>
+        <div class="ecard">
+          <div class="ecard-title"><span>✍️</span> Texty banneru</div>
+          <div class="fr2">
+            <div class="field"><label>Nadpis řádek 1</label><input type="text" id="h-l1"></div>
+            <div class="field"><label>Nadpis řádek 2</label><input type="text" id="h-l2"></div>
+          </div>
+          <div class="field"><label>Podnápis (tag)</label><input type="text" id="h-tag"></div>
+          <div class="field"><label>Popis</label><textarea id="h-sub"></textarea></div>
+          <div class="fr2">
+            <div class="field"><label>Tlačítko 1</label><input type="text" id="h-b1"></div>
+            <div class="field"><label>Tlačítko 2</label><input type="text" id="h-b2"></div>
+          </div>
+        </div>
+        <div class="ecard">
+          <div class="ecard-title"><span>📊</span> Statistiky (4 čísla)</div>
+          <div class="fr2">
+            <div class="field"><label>Stat 1 — číslo</label><input type="text" id="s1n"></div>
+            <div class="field"><label>Stat 1 — popis</label><input type="text" id="s1l"></div>
+          </div>
+          <div class="fr2">
+            <div class="field"><label>Stat 2 — číslo</label><input type="text" id="s2n"></div>
+            <div class="field"><label>Stat 2 — popis</label><input type="text" id="s2l"></div>
+          </div>
+          <div class="fr2">
+            <div class="field"><label>Stat 3 — číslo</label><input type="text" id="s3n"></div>
+            <div class="field"><label>Stat 3 — popis</label><input type="text" id="s3l"></div>
+          </div>
+          <div class="fr2">
+            <div class="field"><label>Stat 4 — číslo</label><input type="text" id="s4n"></div>
+            <div class="field"><label>Stat 4 — popis</label><input type="text" id="s4l"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AKCE -->
+      <div class="panel" id="panel-akce">
+        <div class="p-hdr"><div><div class="p-title">Správa akcí</div><div class="p-sub">Turnaje, kempy, soustředění</div></div><button class="btn btn-pink" onclick="openAkceModal()">+ Přidat akci</button></div>
+        <div class="toolbar">
+          <div class="sw"><input type="text" placeholder="Hledat akci..." oninput="renderAkce(this.value,document.getElementById('aflt').value)" id="aq"></div>
+          <select class="flt" id="aflt" onchange="renderAkce(document.getElementById('aq').value,this.value)">
+            <option value="">Vše</option><option value="upcoming">Nadcházející</option><option value="turnaj">Turnaj</option>
+            <option value="kemp">Kemp</option><option value="mcr">MČR</option><option value="vysledky">Výsledky</option><option value="info">Info</option>
+          </select>
+        </div>
+        <div class="tbl-wrap">
+          <table><thead><tr><th>Datum</th><th>Název</th><th>Typ</th><th>Popis</th><th>Akce</th></tr></thead>
+          <tbody id="akce-tb"></tbody></table>
+          <div class="empty" id="akce-empty" style="display:none"><div class="ico">🗓</div><p>Žádné akce.</p></div>
+        </div>
+      </div>
+
+      <!-- NOVINKY -->
+      <div class="panel" id="panel-novinky">
+        <div class="p-hdr"><div><div class="p-title">Správa novinek</div><div class="p-sub">Články a zprávy z klubu</div></div><button class="btn btn-pink" onclick="openNovModal()">+ Přidat novinku</button></div>
+        <div class="toolbar">
+          <div class="sw"><input type="text" placeholder="Hledat..." oninput="renderNov(this.value)"></div>
+        </div>
+        <div class="tbl-wrap">
+          <table><thead><tr><th>Datum</th><th>Nadpis</th><th>Perex</th><th>Akce</th></tr></thead>
+          <tbody id="nov-tb"></tbody></table>
+          <div class="empty" id="nov-empty" style="display:none"><div class="ico">📰</div><p>Žádné novinky.</p></div>
+        </div>
+      </div>
+
+      <!-- O KLUBU -->
+      <div class="panel" id="panel-oKlubu">
+        <div class="p-hdr"><div><div class="p-title">O klubu</div><div class="p-sub">Texty v sekci „O klubu"</div></div><button class="btn btn-pink" onclick="saveOK()">💾 Uložit</button></div>
+        <div class="ecard">
+          <div class="ecard-title"><span>📝</span> Nadpis a texty</div>
+          <div class="fr3">
+            <div class="field"><label>Nadpis ř. 1</label><input type="text" id="ok-t1"></div>
+            <div class="field"><label>Nadpis ř. 2</label><input type="text" id="ok-t2"></div>
+            <div class="field"><label>Nadpis ř. 3</label><input type="text" id="ok-t3"></div>
+          </div>
+          <div class="field"><label>Odstavec 1</label><textarea id="ok-p1"></textarea></div>
+          <div class="field"><label>Odstavec 2</label><textarea id="ok-p2"></textarea></div>
+          <div class="fr2">
+            <div class="field"><label>Badge — velký text</label><input type="text" id="ok-bb"></div>
+            <div class="field"><label>Badge — malý text</label><input type="text" id="ok-bs"></div>
+          </div>
+        </div>
+        <div class="ecard">
+          <div class="ecard-title"><span>✅</span> 4 vlastnosti klubu</div>
+          <div class="fr2"><div class="field"><label>Karta 1 — název</label><input type="text" id="f1t"></div><div class="field"><label>Karta 1 — text</label><input type="text" id="f1p"></div></div>
+          <div class="fr2"><div class="field"><label>Karta 2 — název</label><input type="text" id="f2t"></div><div class="field"><label>Karta 2 — text</label><input type="text" id="f2p"></div></div>
+          <div class="fr2"><div class="field"><label>Karta 3 — název</label><input type="text" id="f3t"></div><div class="field"><label>Karta 3 — text</label><input type="text" id="f3p"></div></div>
+          <div class="fr2"><div class="field"><label>Karta 4 — název</label><input type="text" id="f4t"></div><div class="field"><label>Karta 4 — text</label><input type="text" id="f4p"></div></div>
+        </div>
+      </div>
+
+      <!-- MLÁDEŽ -->
+      <div class="panel" id="panel-mladez">
+        <div class="p-hdr"><div><div class="p-title">Mládež</div><div class="p-sub">Nábor, trenéři, turnaje</div></div><button class="btn btn-pink" onclick="saveMl()">💾 Uložit</button></div>
+        <div class="ecard">
+          <div class="ecard-title"><span>🎓</span> Hlavní texty</div>
+          <div class="fr2">
+            <div class="field"><label>Nadpis ř. 1</label><input type="text" id="ml-t1"></div>
+            <div class="field"><label>Nadpis ř. 2</label><input type="text" id="ml-t2"></div>
+          </div>
+          <div class="fr2">
+            <div class="field"><label>Text výzvy</label><input type="text" id="ml-ct"></div>
+            <div class="field"><label>Telefon u výzvy</label><input type="text" id="ml-cp"></div>
+          </div>
+        </div>
+        <div class="ecard">
+          <div class="ecard-title"><span>🃏</span> 3 karty</div>
+          <div class="fr2"><div class="field"><label>Karta 1 — ikona</label><input type="text" id="y1i" maxlength="4"></div><div class="field"><label>Karta 1 — název</label><input type="text" id="y1t"></div></div>
+          <div class="field"><label>Karta 1 — text</label><textarea id="y1p" style="min-height:56px"></textarea></div>
+          <div class="fr2"><div class="field"><label>Karta 2 — ikona</label><input type="text" id="y2i" maxlength="4"></div><div class="field"><label>Karta 2 — název</label><input type="text" id="y2t"></div></div>
+          <div class="field"><label>Karta 2 — text</label><textarea id="y2p" style="min-height:56px"></textarea></div>
+          <div class="fr2"><div class="field"><label>Karta 3 — ikona</label><input type="text" id="y3i" maxlength="4"></div><div class="field"><label>Karta 3 — název</label><input type="text" id="y3t"></div></div>
+          <div class="field"><label>Karta 3 — text</label><textarea id="y3p" style="min-height:56px"></textarea></div>
+        </div>
+      </div>
+
+      <!-- VEŘEJNOST -->
+      <div class="panel" id="panel-verejnost">
+        <div class="p-hdr"><div><div class="p-title">Veřejnost</div><div class="p-sub">Texty a rozvrh volných hodin</div></div><button class="btn btn-pink" onclick="saveVer()">💾 Uložit</button></div>
+        <div class="ecard">
+          <div class="ecard-title"><span>📝</span> Texty</div>
+          <div class="fr2">
+            <div class="field"><label>Nadpis ř. 1</label><input type="text" id="vt1"></div>
+            <div class="field"><label>Nadpis ř. 2</label><input type="text" id="vt2"></div>
+          </div>
+          <div class="field"><label>Odstavec 1</label><textarea id="vp1"></textarea></div>
+          <div class="field"><label>Odstavec 2</label><textarea id="vp2"></textarea></div>
+        </div>
+        <div class="ecard">
+          <div class="ecard-title"><span>🕐</span> Rozvrh volných hodin</div>
+          <div id="sched-rows"></div>
+          <button class="btn btn-outline btn-sm" onclick="addSchedRow()" style="margin-top:.6rem">+ Přidat řádek</button>
+        </div>
+      </div>
+
+      <!-- KONTAKT -->
+      <div class="panel" id="panel-kontakt">
+        <div class="p-hdr"><div><div class="p-title">Kontakt</div><div class="p-sub">Kontaktní údaje na webu</div></div><button class="btn btn-pink" onclick="saveKont()">💾 Uložit</button></div>
+        <div class="ecard" style="max-width:540px">
+          <div class="ecard-title"><span>📞</span> Údaje</div>
+          <div class="field"><label>Název organizace</label><input type="text" id="ko"></div>
+          <div class="fr2"><div class="field"><label>Kontaktní osoba</label><input type="text" id="kn"></div><div class="field"><label>Telefon</label><input type="text" id="kp"></div></div>
+          <div class="field"><label>E-mail</label><input type="email" id="ke"></div>
+          <div class="field"><label>Město / Adresa</label><input type="text" id="kc"></div>
+        </div>
+      </div>
+
+      <!-- LOG -->
+      <div class="panel" id="panel-log">
+        <div class="p-hdr"><div><div class="p-title">Protokol aktivity</div><div class="p-sub">Historie změn</div></div><button class="btn btn-outline" onclick="clearLog()">Vymazat log</button></div>
+        <div class="ecard" id="log-list" style="padding:1.2rem 1.5rem;min-height:100px"></div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="panel" id="panel-settings">
+        <div class="p-hdr"><div><div class="p-title">Nastavení</div><div class="p-sub">Heslo a správa dat</div></div></div>
+        <div style="max-width:440px">
+          <div class="ecard">
+            <div class="ecard-title"><span>🔑</span> Změna hesla</div>
+            <div class="field"><label>Aktuální heslo</label><input type="password" id="pc" placeholder="••••••••"></div>
+            <div class="field"><label>Nové heslo</label><input type="password" id="pn" placeholder="••••••••"></div>
+            <div class="field"><label>Potvrdit</label><input type="password" id="pf" placeholder="••••••••"></div>
+            <button class="btn btn-pink" onclick="changePwd()">Změnit heslo</button>
+          </div>
+          <div class="ecard">
+            <div class="ecard-title"><span>💾</span> Data</div>
+            <p style="color:var(--light-grey);font-size:.9rem;margin-bottom:1rem">Export nebo reset všech dat z localStorage.</p>
+            <div style="display:flex;gap:.7rem;flex-wrap:wrap">
+              <button class="btn btn-outline" onclick="exportData()">📤 Exportovat JSON</button>
+              <button class="btn btn-danger" onclick="resetData()">🗑 Resetovat vše</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- MODAL: AKCE -->
+<div class="mov" id="m-akce">
+  <div class="modal">
+    <div class="mhdr"><div class="mttl" id="m-akce-t">Přidat akci</div><button class="mx" onclick="cM('m-akce')">×</button></div>
+    <div class="mbody">
+      <input type="hidden" id="aid">
+      <div class="fr2">
+        <div class="field"><label>Datum</label><input type="date" id="ad"></div>
+        <div class="field"><label>Typ</label>
+          <select id="at"><option value="upcoming">Nadcházející</option><option value="turnaj">Turnaj</option><option value="kemp">Kemp</option><option value="mcr">MČR</option><option value="vysledky">Výsledky</option><option value="info">Info</option></select>
+        </div>
+      </div>
+      <div class="field"><label>Název akce</label><input type="text" id="an" placeholder="např. Krajský turnaj U11"></div>
+      <div class="field"><label>Popis / Výsledky</label><textarea id="ap" placeholder="Krátký popis, výsledky..."></textarea></div>
+      <div class="fr2">
+        <div class="field"><label>Odkaz (URL)</label><input type="url" id="ao" placeholder="https://..."></div>
+        <div class="field"><label>Text odkazu</label><input type="text" id="aot" placeholder="Propozice, Výsledky..."></div>
+      </div>
+    </div>
+    <div class="mfoot"><button class="btn btn-outline" onclick="cM('m-akce')">Zrušit</button><button class="btn btn-pink" onclick="saveAkce()">💾 Uložit</button></div>
+  </div>
+</div>
+
+<!-- MODAL: NOVINKA -->
+<div class="mov" id="m-nov">
+  <div class="modal">
+    <div class="mhdr"><div class="mttl" id="m-nov-t">Přidat novinku</div><button class="mx" onclick="cM('m-nov')">×</button></div>
+    <div class="mbody">
+      <input type="hidden" id="nid">
+      <div class="fr2">
+        <div class="field"><label>Datum</label><input type="date" id="nd"></div>
+        <div class="field"><label>Ikona (emoji)</label><input type="text" id="ni" placeholder="🏆" maxlength="4"></div>
+      </div>
+      <div class="field"><label>Nadpis</label><input type="text" id="nn" placeholder="Skvělý výsledek na turnaji"></div>
+      <div class="field"><label>Perex</label><textarea id="np" placeholder="Krátký popis..."></textarea></div>
+    </div>
+    <div class="mfoot"><button class="btn btn-outline" onclick="cM('m-nov')">Zrušit</button><button class="btn btn-pink" onclick="saveNov()">💾 Uložit</button></div>
+  </div>
+</div>
+
+<!-- MODAL: CONFIRM -->
+<div class="mov" id="m-conf">
+  <div class="modal" style="max-width:360px">
+    <div class="mhdr"><div class="mttl">Smazat?</div><button class="mx" onclick="cM('m-conf')">×</button></div>
+    <div class="mbody"><p style="color:var(--light-grey)">Opravdu smazat <strong id="conf-nm" style="color:var(--white)"></strong>? Nelze vrátit.</p></div>
+    <div class="mfoot"><button class="btn btn-outline" onclick="cM('m-conf')">Zrušit</button><button class="btn btn-danger" id="conf-ok">🗑 Smazat</button></div>
+  </div>
+</div>
+
+<div class="tw" id="toasts"></div>
+
+<script>
+// ── CONFIG & PASSWORD ──
+const PWD_KEY='pink_admin_pwd';
+let adminPwd=localStorage.getItem(PWD_KEY)||'pink2025';
+
+// ── DEFAULTS ──
+const DA=[
+  {id:1,datum:'2026-04-19',typ:'upcoming',nazev:'Krajské přebory mládeže LK U15 a U11, Jablonec nad Nisou',popis:'Bude upřesněno.',odkaz:'',odkazTxt:''},
+  {id:2,datum:'2026-04-11',typ:'kemp',nazev:'Kemp TT-Academy, Vimperk',popis:'So–Ne 11.–12. 4. (Protiva, Výborný).',odkaz:'https://tt-academy.cz/',odkazTxt:'tt-academy.cz'},
+  {id:3,datum:'2026-04-04',typ:'turnaj',nazev:'Velikonoční turnaj Liberec (PINK!)',popis:'Bude upřesněno.',odkaz:'',odkazTxt:''},
+  {id:4,datum:'2026-03-22',typ:'turnaj',nazev:'5. KBT mládeže LK, Kamenický Šenov',popis:'Krajský bodovací turnaj.',odkaz:'',odkazTxt:''},
+  {id:5,datum:'2026-03-20',typ:'mcr',nazev:'MČR mužů a žen, České Budějovice',popis:'Nominováni: Zeman, Čížek, Wolf, Grubr.',odkaz:'',odkazTxt:''},
+  {id:6,datum:'2026-02-21',typ:'vysledky',nazev:'Krajský turnaj U11, Liberec',popis:'Fotografie a výsledky na webu.',odkaz:'',odkazTxt:''},
+  {id:7,datum:'2026-02-14',typ:'vysledky',nazev:'BTM ČR Jaroměř, Kutná Hora',popis:'',odkaz:'https://www.pinkliberec.cz/uspesna-republika-mladeze-v-jaromeri-a-kutne-hore-novinka-129.html',odkazTxt:'Číst článek'},
+  {id:8,datum:'2025-11-22',typ:'vysledky',nazev:'BTM ČR Liberec a Jablonec — největší TT akce kraje',popis:'Podpořeno LK 150 000 Kč.',odkaz:'',odkazTxt:''},
+  {id:9,datum:'2025-05-03',typ:'vysledky',nazev:'Krajské přebory LK — 30 medailí!',popis:'Wolf, Tůma, Korpová (2×), Vargová.',odkaz:'',odkazTxt:''},
+  {id:10,datum:'2025-02-08',typ:'vysledky',nazev:'BTM ČR Hostinné — Wolf 3. místo U17',popis:'Nejlepší výsledek v kariéře!',odkaz:'https://www.pinkliberec.cz/filip-wolf-na-celostatnim-turnaji-u17-3-novinka-86.html',odkazTxt:'Číst článek'},
+];
+const DN=[
+  {id:1,datum:'2025-02-01',icon:'🏆',nazev:'Poslední republikový turnaj mládeže',perex:'Naši mladí hráči předvedli výborné výkony na posledním turnaji sezóny.'},
+  {id:2,datum:'2025-01-15',icon:'🎯',nazev:'Zakončení OP2',perex:'Úspěšné zakončení oblastního přeboru 2. třídy.'},
+  {id:3,datum:'2024-12-20',icon:'🥇',nazev:'Liga na prvním místě!',perex:'B tým PINK! Liberec si zajistil první místo a postup do KP1.'},
+];
+const DH={l1:'PINK',l2:'LIBEREC',tag:'Stolní Tenis · Liberec · od 1991',sub:'Staň se panterem a hraj ping-pong. Trénujeme mládež i dospělé — přijď si zahrát do Liberce!',b1:'Nastup do klubu',b2:'Zjistit více',s1n:'35+',s1l:'Let tradice',s2n:'3×',s2l:'Herny v Liberci',s3n:'1.',s3l:'Místo v lize',s4n:'6+',s4l:'Věk náboru'};
+const DOK={t1:'Tradice',t2:'a vášeň',t3:'pro ping-pong',p1:'PINK! Liberec je stolnětenisový klub z Liberce s více než třicetiletou tradicí. Jsme klub, kde se potkávají zkušení hráči s nadšenými začátečníky.',p2:'Naše oddíly soutěží na krajské i republikové úrovni. B tým si právě zajistil postup do KP1! Pořádáme turnaje a trénujeme mládež od 6 let.',bb:'KP1',bs:'Krajský přebor',f1t:'Profesionální trenéři',f1p:'Zkušení koučové pro každý věk.',f2t:'Moderní vybavení',f2p:'Tři herny s kvalitními stoly.',f3t:'Soutěžní tým',f3p:'Aktivní účast v ligách.',f4t:'Přátelská atmosféra',f4p:'Komunita hráčů všech věků.'};
+const DML={t1:'Pingpong pro',t2:'každého mladého hráče',ct:'Máte otázky? Zavolejte nám:',cp:'+420 777 263 342',y1i:'🎓',y1t:'Nábor',y1p:'Vyzkoušej si stolní tenis. Nábor od 6 do 18 let.',y2i:'🏅',y2t:'Turnaje',y2p:'Pravidelná účast na krajských i republikových turnajích.',y3i:'👥',y3t:'Trenéři',y3p:'Certifikovaní trenéři pro každého hráče individuálně.'};
+const DV={t1:'Otevřeno',t2:'pro každého',p1:'Nejste soutěžní hráč, ale chcete si zahrát? Naše herny jsou otevřeny i pro veřejnost.',p2:'Půjčujeme pálky i míčky. Bez registrace — stačí přijít ve volných hodinách.',schedule:[{day:'Pondělí',time:'17:00 – 19:00',type:'Volná hra'},{day:'Středa',time:'17:00 – 20:00',type:'Volná hra'},{day:'Pátek',time:'16:00 – 19:00',type:'Volná hra'},{day:'Sobota',time:'10:00 – 13:00',type:'Rodiny, děti'}]};
+const DK={org:'PINK! Liberec, z.s.',name:'Martin Protiva',phone:'+420 777 263 342',email:'pink-liberec@seznam.cz',city:'Liberec, Česká republika'};
+
+// ── STORAGE ──
+const ld=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}};
+const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+
+let akce=ld('pa',DA), nov=ld('pn',DN), hero=ld('ph',DH), ok=ld('po',DOK);
+let ml=ld('pm',DML), ver=ld('pv',DV), kont=ld('pk',DK), log=ld('pl',[]);
+
+function sAll(){sv('pa',akce);sv('pn',nov);sv('ph',hero);sv('po',ok);sv('pm',ml);sv('pv',ver);sv('pk',kont);sv('pl',log)}
+
+// ── AUTH ──
+document.getElementById('lpwd').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+function doLogin(){
+  const p=document.getElementById('lpwd').value;
+  if(p===adminPwd){
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('admin').classList.add('show');
+    refreshAll();
+  }else{
+    document.getElementById('lerr').classList.add('show');
+    document.getElementById('lpwd').value='';
+  }
+}
+function doLogout(){
+  document.getElementById('admin').classList.remove('show');
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('lpwd').value='';
+  document.getElementById('lerr').classList.remove('show');
+}
+
+// ── PANELS ──
+function sp(name,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  if(el)el.classList.add('active');
+  ({akce:renderAkce,novinky:renderNov,log:renderLog,hero:loadHero,oKlubu:loadOK,mladez:loadML,verejnost:loadVer,kontakt:loadKont})[name]?.();
+}
+
+// ── AKCE ──
+const TL={upcoming:'Nadcházející',turnaj:'Turnaj',kemp:'Kemp',mcr:'MČR',vysledky:'Výsledky',info:'Info'};
+function renderAkce(q='',typ=''){
+  const tb=document.getElementById('akce-tb'),em=document.getElementById('akce-empty');
+  document.getElementById('cnt-akce').textContent=akce.length;
+  let items=[...akce].sort((a,b)=>new Date(b.datum)-new Date(a.datum));
+  if(q)items=items.filter(i=>i.nazev.toLowerCase().includes(q.toLowerCase())||i.popis.toLowerCase().includes(q.toLowerCase()));
+  if(typ)items=items.filter(i=>i.typ===typ);
+  tb.innerHTML='';
+  if(!items.length){em.style.display='block';return}
+  em.style.display='none';
+  items.forEach(it=>{
+    const d=new Date(it.datum).toLocaleDateString('cs-CZ',{day:'2-digit',month:'2-digit',year:'numeric'});
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="td-d">${d}</td><td class="td-t">${e(it.nazev)}</td>
+    <td><span class="badge b-${it.typ}">${TL[it.typ]||it.typ}</span></td>
+    <td class="td-m">${e(it.popis)||'—'}</td>
+    <td class="td-a">
+      <button class="btn btn-outline btn-sm" onclick="editAkce(${it.id})">✏️</button>
+      <button class="btn btn-danger btn-sm" onclick="cDel('akce',${it.id},'${e2(it.nazev)}')">🗑</button>
+    </td>`;
+    tb.appendChild(tr);
+  });
+}
+let eid=null;
+function openAkceModal(id=null){
+  eid=id;
+  document.getElementById('m-akce-t').textContent=id?'Upravit akci':'Přidat akci';
+  const it=id?akce.find(x=>x.id===id):null;
+  document.getElementById('ad').value=it?it.datum:new Date().toISOString().split('T')[0];
+  document.getElementById('at').value=it?it.typ:'upcoming';
+  document.getElementById('an').value=it?it.nazev:'';
+  document.getElementById('ap').value=it?it.popis:'';
+  document.getElementById('ao').value=it?it.odkaz:'';
+  document.getElementById('aot').value=it?it.odkazTxt:'';
+  oM('m-akce');
+}
+function editAkce(id){openAkceModal(id)}
+function saveAkce(){
+  const nazev=g('an');if(!nazev){toast('Vyplňte název.','error');return}
+  const it={id:eid||Date.now(),datum:g('ad'),typ:g('at'),nazev,popis:g('ap'),odkaz:g('ao'),odkazTxt:g('aot')};
+  if(eid){akce[akce.findIndex(x=>x.id===eid)]=it;aLog('edit','Upravena akce: '+nazev);toast('Uloženo.','success')}
+  else{akce.unshift(it);aLog('add','Přidána akce: '+nazev);toast('Akce přidána.','success')}
+  sAll();cM('m-akce');renderAkce();refreshDash();
+}
+
+// ── NOVINKY ──
+function renderNov(q=''){
+  const tb=document.getElementById('nov-tb'),em=document.getElementById('nov-empty');
+  document.getElementById('cnt-nov').textContent=nov.length;
+  let items=[...nov].sort((a,b)=>new Date(b.datum)-new Date(a.datum));
+  if(q)items=items.filter(i=>i.nazev.toLowerCase().includes(q.toLowerCase()));
+  tb.innerHTML='';
+  if(!items.length){em.style.display='block';return}
+  em.style.display='none';
+  items.forEach(it=>{
+    const d=new Date(it.datum).toLocaleDateString('cs-CZ',{day:'2-digit',month:'2-digit',year:'numeric'});
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="td-d">${d}</td><td class="td-t">${it.icon||'📰'} ${e(it.nazev)}</td>
+    <td class="td-m">${e(it.perex)||'—'}</td>
+    <td class="td-a">
+      <button class="btn btn-outline btn-sm" onclick="editNov(${it.id})">✏️</button>
+      <button class="btn btn-danger btn-sm" onclick="cDel('nov',${it.id},'${e2(it.nazev)}')">🗑</button>
+    </td>`;
+    tb.appendChild(tr);
+  });
+}
+function openNovModal(id=null){
+  eid=id;
+  document.getElementById('m-nov-t').textContent=id?'Upravit novinku':'Přidat novinku';
+  const it=id?nov.find(x=>x.id===id):null;
+  document.getElementById('nd').value=it?it.datum:new Date().toISOString().split('T')[0];
+  document.getElementById('ni').value=it?(it.icon||'📰'):'📰';
+  document.getElementById('nn').value=it?it.nazev:'';
+  document.getElementById('np').value=it?it.perex:'';
+  oM('m-nov');
+}
+function editNov(id){openNovModal(id)}
+function saveNov(){
+  const nazev=g('nn');if(!nazev){toast('Vyplňte nadpis.','error');return}
+  const it={id:eid||Date.now(),datum:g('nd'),icon:g('ni')||'📰',nazev,perex:g('np')};
+  if(eid){nov[nov.findIndex(x=>x.id===eid)]=it;aLog('edit','Upravena novinka: '+nazev);toast('Uloženo.','success')}
+  else{nov.unshift(it);aLog('add','Přidána novinka: '+nazev);toast('Novinka přidána.','success')}
+  sAll();cM('m-nov');renderNov();refreshDash();
+}
+
+// ── HERO ──
+function loadHero(){
+  const h=hero;
+  document.getElementById('h-l1').value=h.l1||''; document.getElementById('h-l2').value=h.l2||'';
+  document.getElementById('h-tag').value=h.tag||''; document.getElementById('h-sub').value=h.sub||'';
+  document.getElementById('h-b1').value=h.b1||''; document.getElementById('h-b2').value=h.b2||'';
+  ['s1n','s1l','s2n','s2l','s3n','s3l','s4n','s4l'].forEach(k=>document.getElementById(k).value=h[k]||'');
+}
+function saveHero(){
+  hero={l1:g('h-l1'),l2:g('h-l2'),tag:g('h-tag'),sub:g('h-sub'),b1:g('h-b1'),b2:g('h-b2'),
+    s1n:g('s1n'),s1l:g('s1l'),s2n:g('s2n'),s2l:g('s2l'),s3n:g('s3n'),s3l:g('s3l'),s4n:g('s4n'),s4l:g('s4l')};
+  sAll();aLog('edit','Upravena Hero sekce.');toast('Hero uložena.','success');
+}
+
+// ── O KLUBU ──
+function loadOK(){
+  const d=ok;
+  ['t1','t2','t3','p1','p2'].forEach(k=>document.getElementById('ok-'+k).value=d[k]||'');
+  document.getElementById('ok-bb').value=d.bb||''; document.getElementById('ok-bs').value=d.bs||'';
+  ['f1t','f1p','f2t','f2p','f3t','f3p','f4t','f4p'].forEach(k=>document.getElementById(k).value=d[k]||'');
+}
+function saveOK(){
+  ok={t1:g('ok-t1'),t2:g('ok-t2'),t3:g('ok-t3'),p1:g('ok-p1'),p2:g('ok-p2'),bb:g('ok-bb'),bs:g('ok-bs'),
+    f1t:g('f1t'),f1p:g('f1p'),f2t:g('f2t'),f2p:g('f2p'),f3t:g('f3t'),f3p:g('f3p'),f4t:g('f4t'),f4p:g('f4p')};
+  sAll();aLog('edit','Upravena sekce O klubu.');toast('O klubu uloženo.','success');
+}
+
+// ── MLÁDEŽ ──
+function loadML(){
+  const d=ml;
+  document.getElementById('ml-t1').value=d.t1||''; document.getElementById('ml-t2').value=d.t2||'';
+  document.getElementById('ml-ct').value=d.ct||''; document.getElementById('ml-cp').value=d.cp||'';
+  ['y1i','y1t','y1p','y2i','y2t','y2p','y3i','y3t','y3p'].forEach(k=>document.getElementById(k).value=d[k]||'');
+}
+function saveMl(){
+  ml={t1:g('ml-t1'),t2:g('ml-t2'),ct:g('ml-ct'),cp:g('ml-cp'),
+    y1i:g('y1i')||'🎓',y1t:g('y1t'),y1p:g('y1p'),y2i:g('y2i')||'🏅',y2t:g('y2t'),y2p:g('y2p'),y3i:g('y3i')||'👥',y3t:g('y3t'),y3p:g('y3p')};
+  sAll();aLog('edit','Upravena sekce Mládež.');toast('Mládež uložena.','success');
+}
+
+// ── VEŘEJNOST ──
+function loadVer(){
+  document.getElementById('vt1').value=ver.t1||''; document.getElementById('vt2').value=ver.t2||'';
+  document.getElementById('vp1').value=ver.p1||''; document.getElementById('vp2').value=ver.p2||'';
+  renderSchedRows();
+}
+function renderSchedRows(){
+  const w=document.getElementById('sched-rows');w.innerHTML='';
+  (ver.schedule||[]).forEach((r,i)=>{
+    const div=document.createElement('div');
+    div.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:.6rem;margin-bottom:.6rem;align-items:end';
+    div.innerHTML=`<div class="field" style="margin:0"><label>Den</label><input value="${e(r.day)}" oninput="ver.schedule[${i}].day=this.value"></div>
+    <div class="field" style="margin:0"><label>Čas</label><input value="${e(r.time)}" oninput="ver.schedule[${i}].time=this.value"></div>
+    <div class="field" style="margin:0"><label>Typ</label><input value="${e(r.type)}" oninput="ver.schedule[${i}].type=this.value"></div>
+    <button class="btn btn-danger btn-sm" style="margin-bottom:.1rem" onclick="rmSched(${i})">✕</button>`;
+    w.appendChild(div);
+  });
+}
+function addSchedRow(){ver.schedule.push({day:'',time:'',type:''});renderSchedRows()}
+function rmSched(i){ver.schedule.splice(i,1);renderSchedRows()}
+function saveVer(){
+  ver.t1=g('vt1');ver.t2=g('vt2');ver.p1=g('vp1');ver.p2=g('vp2');
+  sAll();aLog('edit','Upravena sekce Veřejnost.');toast('Veřejnost uložena.','success');
+}
+
+// ── KONTAKT ──
+function loadKont(){document.getElementById('ko').value=kont.org||'';document.getElementById('kn').value=kont.name||'';document.getElementById('kp').value=kont.phone||'';document.getElementById('ke').value=kont.email||'';document.getElementById('kc').value=kont.city||''}
+function saveKont(){kont={org:g('ko'),name:g('kn'),phone:g('kp'),email:g('ke'),city:g('kc')};sAll();aLog('edit','Upraveny kontaktní údaje.');toast('Kontakt uložen.','success')}
+
+// ── DELETE ──
+let pdel=null;
+function cDel(type,id,name){
+  pdel={type,id};
+  document.getElementById('conf-nm').textContent=name;
+  document.getElementById('conf-ok').onclick=doDel;
+  oM('m-conf');
+}
+function doDel(){
+  if(!pdel)return;
+  const{type,id}=pdel;
+  if(type==='akce'){
+    const it=akce.find(a=>a.id===id);
+    akce=akce.filter(a=>a.id!==id);
+    aLog('delete','Smazána akce: '+(it?.nazev||''));
+    sAll();renderAkce();refreshDash();toast('Akce smazána.','info');
+  }else{
+    const it=nov.find(n=>n.id===id);
+    nov=nov.filter(n=>n.id!==id);
+    aLog('delete','Smazána novinka: '+(it?.nazev||''));
+    sAll();renderNov();refreshDash();toast('Novinka smazána.','info');
+  }
+  cM('m-conf');
+}
+
+// ── LOG ──
+function aLog(type,msg){log.unshift({type,msg,time:new Date().toISOString()});if(log.length>100)log=log.slice(0,100);sAll()}
+function renderLog(){
+  const el=document.getElementById('log-list');
+  if(!log.length){el.innerHTML='<div class="empty"><div class="ico">📋</div><p>Žádná aktivita.</p></div>';return}
+  el.innerHTML=log.slice(0,60).map(l=>{
+    const d=new Date(l.time),ts=d.toLocaleDateString('cs-CZ')+' '+d.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
+    return`<div class="ai"><div class="adot ${l.type}"></div><div class="atxt">${e(l.msg)}</div><div class="atime">${ts}</div></div>`;
+  }).join('');
+}
+function clearLog(){log=[];sAll();renderLog();toast('Log vymazán.','info')}
+
+// ── DASHBOARD ──
+function refreshDash(){
+  const today=new Date();today.setHours(0,0,0,0);
+  const upc=akce.filter(a=>new Date(a.datum)>=today);
+  document.getElementById('d-akce').textContent=akce.length;
+  document.getElementById('d-upc').textContent=upc.length;
+  document.getElementById('d-nov').textContent=nov.length;
+  document.getElementById('cnt-akce').textContent=akce.length;
+  document.getElementById('cnt-nov').textContent=nov.length;
+  if(log[0]){const d=new Date(log[0].time);document.getElementById('d-last').textContent=d.toLocaleDateString('cs-CZ',{day:'2-digit',month:'2-digit'})}
+  const ul=document.getElementById('d-upc-list');
+  const next=[...upc].sort((a,b)=>new Date(a.datum)-new Date(b.datum)).slice(0,5);
+  ul.innerHTML=next.length?next.map(a=>{const ds=new Date(a.datum).toLocaleDateString('cs-CZ',{day:'2-digit',month:'2-digit'});return`<div style="display:flex;gap:.7rem;padding:.5rem 0;border-bottom:1px solid rgba(255,255,255,.05)"><span style="color:var(--pink);font-family:'Barlow Condensed',sans-serif;font-weight:700;width:42px;flex-shrink:0">${ds}</span><span style="font-size:.87rem">${e(a.nazev)}</span></div>`}).join(''):'<p style="color:var(--light-grey);font-size:.88rem">Žádné nadcházející akce.</p>';
+  const al=document.getElementById('d-act');
+  al.innerHTML=log.length?log.slice(0,5).map(l=>{const d=new Date(l.time),ts=d.toLocaleDateString('cs-CZ',{day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});return`<div class="ai"><div class="adot ${l.type}"></div><div class="atxt" style="font-size:.82rem">${e(l.msg)}</div><div class="atime">${ts}</div></div>`}).join(''):'<p style="color:var(--light-grey);font-size:.88rem">Žádná aktivita.</p>';
+}
+
+// ── SETTINGS ──
+function changePwd(){
+  const c=document.getElementById('pc').value,n=document.getElementById('pn').value,f=document.getElementById('pf').value;
+  if(c!==adminPwd){toast('Aktuální heslo je nesprávné.','error');return}
+  if(n.length<6){toast('Nové heslo musí mít alespoň 6 znaků.','error');return}
+  if(n!==f){toast('Hesla se neshodují.','error');return}
+  adminPwd=n;localStorage.setItem(PWD_KEY,n);
+  ['pc','pn','pf'].forEach(id=>document.getElementById(id).value='');
+  aLog('edit','Změněno admin heslo.');toast('Heslo změněno.','success');
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify({akce,novinky:nov,hero,oKlubu:ok,mladez:ml,verejnost:ver,kontakt:kont},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='pink-liberec-data.json';a.click();
+  toast('Data exportována.','success');
+}
+function resetData(){
+  if(!confirm('Resetovat VŠECHNA data? Tato akce je nevratná.'))return;
+  akce=JSON.parse(JSON.stringify(DA));nov=JSON.parse(JSON.stringify(DN));hero={...DH};ok={...DOK};
+  ml={...DML};ver=JSON.parse(JSON.stringify(DV));kont={...DK};log=[];
+  sAll();refreshAll();toast('Data resetována.','info');
+}
+
+// ── MODALS ──
+function oM(id){document.getElementById(id).classList.add('show')}
+function cM(id){document.getElementById(id).classList.remove('show')}
+document.querySelectorAll('.mov').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('show')}));
+
+// ── TOAST ──
+function toast(msg,type='info'){
+  const w=document.getElementById('toasts'),t=document.createElement('div');
+  t.className=`toast ${type}`;
+  t.innerHTML=`<span>${{success:'✅',error:'❌',info:'ℹ️'}[type]||'ℹ️'}</span><span>${msg}</span>`;
+  w.appendChild(t);
+  setTimeout(()=>{t.style.cssText='opacity:0;transform:translateX(40px);transition:all .3s';setTimeout(()=>t.remove(),300)},3000);
+}
+
+// ── HELPERS ──
+function g(id){const el=document.getElementById(id);return el?(el.value||'').trim():''}
+function e(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function e2(s){return String(s||'').replace(/'/g,"\\'").replace(/"/g,'\\"')}
+
+// ── INIT ──
+function refreshAll(){renderAkce();renderNov();refreshDash()}
+</script>
+</body>
+</html>
